@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <title>Cablin web assembly test</title>
+  </head>
+  <body>
+    <script src="cablin_wasm.js"> </script>
+  </body>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+  
+  <div class="container" style="padding-top: 5px;">
+    <div class="row">
+      <div class="col-md-12">
+        <h1>Run Cablin Online</h1>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-6">
+        <button onclick="run();" type="button" class="btn btn-primary">Execute</button>
+        <textarea class="form-control" rows="20" id="code">- import: my
+- func:
+    name: main
+    body:
+      - call:
+          name: my::print
+          params:
+            - const:
+                type: string
+                value: Hello world!</textarea>
+      </div>
+      <div class="col-md-6">
+        <div id="log">
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    var run_cablin_wrap = Module.cwrap('cablinRun', 'number', ['string'], ['pointer']);
+    var get_cablin_error_wrap = Module.cwrap('getCablinError', 'number', ['string'], ['pointer']);
+
+    function run_cablin(s) {
+      var print_func = Module.addFunction(function(msg) {
+        var line = document.createTextNode(Module.UTF8ToString(msg));
+        document.getElementById('log').appendChild(line);
+
+        var z = document.createElement('br');
+        document.getElementById('log').appendChild(z);
+      });
+      var res = run_cablin_wrap(s, print_func);
+      Module.removeFunction(print_func);
+      return res;
+    }
+
+    function get_cablin_error() {
+      var err_msg = get_cablin_error_wrap();
+      return Module.UTF8ToString(err_msg);
+    }
+
+    function run() {
+      var body = document.getElementById('code').value;
+      document.getElementById('log').innerHTML = '';
+      if (run_cablin(body) == 1) {
+        alert(get_cablin_error());
+      }
+    }
+  </script>
+
+</html>
